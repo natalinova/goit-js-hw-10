@@ -11,6 +11,7 @@ inputField.addEventListener('input', debounce(formInput, DEBOUNCE_DELAY))
 
 function formInput(e) {
     e.preventDefault();
+    cleanMarkup()
     if (e.target.value.trim().toLowerCase() === '') {
         return
     }
@@ -18,7 +19,7 @@ function formInput(e) {
 
 
     fetchCountry(searchQuery).then(response => {
-        if (response.length > 10) {
+        if (response.length >=10) {
             Notiflix.Notify.warning('Too many matches found. Please enter a more specific name.');
             cleanMarkup()
         }
