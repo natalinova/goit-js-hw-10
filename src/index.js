@@ -2,47 +2,78 @@ import './css/styles.css';
 import debounce from 'lodash.debounce';
 import Notiflix from 'notiflix';
 
-const DEBOUNCE_DELAY = 300;
+const DEBOUNCE_DELAY = 1000;
 
-const inputField = document.querySelector('input#search-box')
-console.log(inputField);
+const inputField = document.querySelector('input#search-box');
 const countryList = document.querySelector('.country-list');
-console.log(countryList);
-const countryInfo = document.querySelector('.country-info')
-inputField.addEventListener('input', debounce(formInput,2000))
+const countryInfo = document.querySelector('.country-info');
+inputField.addEventListener('input', debounce(formInput, DEBOUNCE_DELAY))
+
 function formInput(e) {
     e.preventDefault();
+    if (e.target.value.trim().toLowerCase() === '') {
+        return
+    }
     const searchQuery = e.target.value.trim().toLowerCase();
-    console.log(searchQuery);
+
 
     fetchCountry(searchQuery).then(response => {
         if (response.length > 10) {
             Notiflix.Notify.warning('Too many matches found. Please enter a more specific name.');
+            cleanMarkup()
         }
-        if (response.length > 1) {
-            renderFullMarkup(response)
+        if (response.length > 1 && response.length < 10) {
+            renderSmallMarkup(response)
         }
-        renderSmallMarkup(response)
-    }).catch(console.log('Error 404!'))
+        if(response.length === 1 )
+        renderFullMarkup(response)
+    })
 }
 
 function renderSmallMarkup(array) {
-    const showCountry = array.map(item => { return  `<li> <img src = "${item.flags.svg}" alt = "${item.name.official} "> <p> ${item.name.official}</p> </li>`}).join('')
-    console.log(showCountry);
-    countryInfo.innerHTML = showCountry;
+    cleanMarkup()
+    const showManyCountry = array.map(item => {
+        return `
+    <li class="country_item">
+        <img src = "${item.flags.svg}" alt = "${item.name.official} width = "40px" height = "40px">
+         <p class = "country_title"> ${item.name.official}</p>
+     </li>`
+    }).join('')
+    console.log(showManyCountry);
+    countryInfo.innerHTML = showManyCountry;
 
 
 }
 function renderFullMarkup(array) {
-    const showManyCountry = array.map(item => { return `<img src = "${item.flags.svg}" alt = "${item.name.official} "> <p> ${item.name.official}</p> </br> <p> Capital:${item.capital}</p> </br> <p> Population:${item.population}</p> </br> <p> Languages:${item.languagues}</p> </br>` }).join('');
-    console.log(showManyCountry);
-    countryInfo.innerHTML = showManyCountry;
+    cleanMarkup();
+    const showOneCountry = array.map(item => {
+        return `
+         <img src = "${item.flags.svg}" alt = "${item.name.official} width = "120px" height = "80px""> 
+         <p class = "country_title"> ${item.name.official}</p>
+        <p > Capital:${item.capital}</p>
+        <p> Population:${item.population}</p> 
+        <p> Languages: ${Object.values(item.languages)}</p>`
+    }).join('');
+    console.log(showOneCountry);
+    countryInfo.innerHTML = showOneCountry;
 }
+
 function fetchCountry(query) {
-    return fetch(`https://restcountries.com/v3.1/name/${query}?fields=name,capital,population,flags,languages`).
+    const fields = 'name,capital,population,flags,languages'
+    return fetch(`https://restcountries.com/v3.1/name/${query}?fields=${fields}`).
         then(response => {
-            if (!response.ok) { throw new Error(Notiflix.Notify.failure("Oops, there is no country with that name"))}
-            else { return response.json }
-        
-        }).catch(console.log('Opps!'))
+            console.log(response)
+            if (!response.ok) {
+                throw new Error(Notiflix.Notify.failure("Oops, there is no country with that name"));
+                
+            }
+            else {
+                return response.json()
+            }
+        })
+}
+
+function cleanMarkup() {
+    countryList.innerHTML = "";
+    countryInfo.innerHTML = "";
 }
